@@ -1,6 +1,6 @@
 // 1. Set up your Supabase client
-const SUPABASE_URL = 'https://mszjjxnwqwsuzuaohhsm.supabase.co'; // Get this from your Supabase Project Settings -> API
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1zempqeG53cXdzdXp1YW9oaHNtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE3NDA3MTAsImV4cCI6MjA2NzMxNjcxMH0.YGq7N23qtdvTF-TRfYoUMCZfV3VOyDEBkAbn1PX0gFw'; // Get this from your Supabase Project Settings -> API
+const SUPABASE_URL = 'YOUR_SUPABASE_URL'; // Get this from your Supabase Project Settings -> API
+const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY'; // Get this from your Supabase Project Settings -> API
 
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -10,43 +10,54 @@ const guessesList = document.getElementById('guesses-list');
 
 // 3. Function to fetch and display guesses
 const fetchGuesses = async () => {
-    // Fetch data from the 'guesses' table
     const { data, error } = await supabase
         .from('guesses')
         .select('*')
-        .order('created_at', { ascending: false }); // Show newest first
+        .order('created_at', { ascending: false });
 
     if (error) {
         console.error('Error fetching guesses:', error);
         return;
     }
 
-    // Clear the list and display the new data
     guessesList.innerHTML = '';
     data.forEach(guess => {
         const li = document.createElement('li');
-        li.textContent = `${guess.baby_name_guess} (guessed by ${guess.guesser_name})`;
+        // === CHANGED: Updated display to show both guesses ===
+        li.innerHTML = `
+            <strong>${guess.guesser_name}</strong> guessed:<br>
+            Boy: ${guess.boy_name_guess} | Girl: ${guess.girl_name_guess}
+        `;
+        // === END OF CHANGES ===
         guessesList.appendChild(li);
     });
 };
 
 // 4. Function to handle form submission
 const addGuess = async (event) => {
-    event.preventDefault(); // Prevent the form from reloading the page
+    event.preventDefault();
 
     const guesserName = document.getElementById('guesser-name').value;
-    const babyName = document.getElementById('baby-name').value;
+    
+    // === CHANGED: Get values from the two new input fields ===
+    const boyNameGuess = document.getElementById('boy-name-guess').value;
+    const girlNameGuess = document.getElementById('girl-name-guess').value;
+    // === END OF CHANGES ===
 
-    // Insert the new guess into the 'guesses' table
+    // === CHANGED: Insert object now matches your new table columns ===
     const { error } = await supabase
         .from('guesses')
-        .insert([{ guesser_name: guesserName, baby_name_guess: babyName }]);
+        .insert([{ 
+            guesser_name: guesserName, 
+            boy_name_guess: boyNameGuess, 
+            girl_name_guess: girlNameGuess 
+        }]);
+    // === END OF CHANGES ===
     
     if (error) {
         console.error('Error adding guess:', error);
         alert('Could not submit your guess. Please try again.');
     } else {
-        // Clear the form and refresh the list of guesses
         form.reset();
         await fetchGuesses();
     }
@@ -54,5 +65,4 @@ const addGuess = async (event) => {
 
 // 5. Add event listeners
 form.addEventListener('submit', addGuess);
-// Fetch guesses when the page first loads
 document.addEventListener('DOMContentLoaded', fetchGuesses);
