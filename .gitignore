@@ -1,0 +1,15 @@
+# Dependency directories
+node_modules/
+
+# Supabase temporary and secret files
+# The .supabase directory itself should be committed, but we ignore the temp folder inside it.
+.supabase/.temp/
+.supabase/functions/.env
+.supabase/db/schemas/
+
+# Build artifacts and installers
+supabase.deb
+
+# OS-specific files
+.DS_Store
+Thumbs.db
