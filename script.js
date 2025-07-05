@@ -7,12 +7,13 @@ const errorMessage = document.getElementById('error-message');
 const guessForm = document.getElementById('guess-form');
 const guessesList = document.getElementById('guesses-list');
 
-// The URL for your DEPLOYED Edge Function
-const EDGE_FUNCTION_URL = 'https://mszjjxnwqwsuzuaohhsm.supabase.co/functions/v1/get-guesses';
+// URLs for our two Edge Functions
+const GET_GUESSES_URL = 'https://mszjjxnwqwsuzuaohhsm.supabase.co/functions/v1/get-guesses';
+const ADD_GUESS_URL = 'https://mszjjxnwqwsuzuaohhsm.supabase.co/functions/v1/add-guess';
 
-// Function to unlock the app by calling the Edge Function
+// --- Function to unlock the app by calling the first Edge Function ---
 const unlockApp = async (event) => {
-    event.preventDefault(); // Prevent the form from reloading the page
+    event.preventDefault();
     const password = passwordInput.value;
     errorMessage.textContent = '';
     const button = passwordForm.querySelector('button');
@@ -20,25 +21,22 @@ const unlockApp = async (event) => {
     button.textContent = 'Unlocking...';
 
     try {
-        const response = await fetch(EDGE_FUNCTION_URL, {
+        const response = await fetch(GET_GUESSES_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ password: password })
         });
 
         if (!response.ok) {
-            // Get error message from the Edge Function's response
             const errorText = await response.text();
             throw new Error(errorText || 'Invalid password');
         }
 
         const { guesses } = await response.json();
         
-        // Success! Hide the password gate and show the main app
         passwordGate.style.display = 'none';
         mainApp.style.display = 'block';
 
-        // Display the initial list of guesses
         displayGuesses(guesses);
 
     } catch (error) {
@@ -49,7 +47,7 @@ const unlockApp = async (event) => {
     }
 };
 
-// Function to render the list of guesses
+// --- Function to display the list of guesses ---
 const displayGuesses = (guesses) => {
     guessesList.innerHTML = '';
     if (!guesses || guesses.length === 0) {
@@ -66,8 +64,49 @@ const displayGuesses = (guesses) => {
     });
 };
 
-// Add event listener for the password form
-passwordForm.addEventListener('submit', unlockApp);
+// === NEW: Function to add a guess by calling the second Edge Function ===
+const addGuess = async (event) => {
+    event.preventDefault(); // This is the crucial line that prevents the page from reloading!
 
-// NOTE: We still need to create a function to handle submitting a NEW guess.
-// That would require another Edge Function.
+    const button = guessForm.querySelector('button');
+    button.disabled = true;
+    button.textContent = 'Submitting...';
+
+    const newGuess = {
+        guesser_name: document.getElementById('guesser-name').value,
+        boy_name_guess: document.getElementById('boy-name-guess').value,
+        girl_name_guess: document.getElementById('girl-name-guess').value
+    };
+
+    try {
+        const response = await fetch(ADD_GUESS_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(newGuess)
+        });
+
+        if (!response.ok) {
+            throw new Error('Server could not save the guess.');
+        }
+
+        // The function returns the full updated list of guesses
+        const { guesses } = await response.json();
+
+        // Refresh the list on the page and reset the form
+        displayGuesses(guesses);
+        guessForm.reset();
+
+    } catch (error) {
+        alert('Sorry, there was an error submitting your guess.');
+        console.error('Failed to add guess:', error);
+    } finally {
+        button.disabled = false;
+        button.textContent = 'Submit Guesses';
+    }
+};
+// === END OF NEW FUNCTION ===
+
+
+// --- Event Listeners ---
+passwordForm.addEventListener('submit', unlockApp);
+guessForm.addEventListener('submit', addGuess); // === NEW: Add event listener for the guess form ===
