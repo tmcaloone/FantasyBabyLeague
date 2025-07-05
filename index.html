@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fantasy Baby League!</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <h1>Fantasy Baby League</h1>
+    <p>Guess the baby's name!</p>
+
+    <form id="guess-form">
+        <input type="text" id="guesser-name" placeholder="Your Name" required>
+        <input type="text" id="baby-name" placeholder="Baby Name Guess" required>
+        <button type="submit">Submit Guess</button>
+    </form>
+
+    <h2>Current Guesses:</h2>
+    <ul id="guesses-list">
+        <!-- Guesses will be loaded here by JavaScript -->
+        <li>Loading...</li>
+    </ul>
+
+    <!-- Import the Supabase client library -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Import your custom script -->
+    <script src="script.js"></script>
+</body>
+</html>
