@@ -1,68 +1,72 @@
-// 1. Set up your Supabase client
-const SUPABASE_URL = 'YOUR_SUPABASE_URL'; // Get this from your Supabase Project Settings -> API
-const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY'; // Get this from your Supabase Project Settings -> API
+// Get references to all the new elements
+const passwordGate = document.getElementById('password-gate');
+const mainApp = document.getElementById('main-app');
+const passwordForm = document.getElementById('password-form');
+const passwordInput = document.getElementById('password-input');
+const errorMessage = document.getElementById('error-message');
 
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-// 2. Get references to your HTML elements
-const form = document.getElementById('guess-form');
+// Get references for the main app
+const guessForm = document.getElementById('guess-form');
 const guessesList = document.getElementById('guesses-list');
+const guesserNameInput = document.getElementById('guesser-name');
+const boyNameInput = document.getElementById('boy-name-guess');
+const girlNameInput = document.getElementById('girl-name-guess');
 
-// 3. Function to fetch and display guesses
-const fetchGuesses = async () => {
-    const { data, error } = await supabase
-        .from('guesses')
-        .select('*')
-        .order('created_at', { ascending: false });
+// The URL for your new Edge Function
+const EDGE_FUNCTION_URL = 'https://mszjjxnwqwsuzuaohhsm.supabase.co/functions/v1/get-guesses';
+// No need for Supabase client or keys on the frontend anymore!
 
-    if (error) {
-        console.error('Error fetching guesses:', error);
+// Function to unlock the app
+const unlockApp = async (event) => {
+    event.preventDefault();
+    const password = passwordInput.value;
+    errorMessage.textContent = '';
+
+    try {
+        const response = await fetch(EDGE_FUNCTION_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ password: password })
+        });
+
+        if (!response.ok) {
+            throw new Error(await response.text());
+        }
+
+        const { guesses } = await response.json();
+        
+        // Success! Hide the password gate and show the main app
+        passwordGate.style.display = 'none';
+        mainApp.style.display = 'block';
+
+        // Display the initial list of guesses
+        displayGuesses(guesses);
+
+    } catch (error) {
+        errorMessage.textContent = 'Incorrect password. Please try again.';
+        console.error('Login failed:', error.message);
+    }
+};
+
+// Function to display the list of guesses
+const displayGuesses = (guesses) => {
+    guessesList.innerHTML = '';
+    if (guesses.length === 0) {
+        guessesList.innerHTML = '<li>No guesses yet. Be the first!</li>';
         return;
     }
-
-    guessesList.innerHTML = '';
-    data.forEach(guess => {
+    guesses.forEach(guess => {
         const li = document.createElement('li');
-        // === CHANGED: Updated display to show both guesses ===
         li.innerHTML = `
             <strong>${guess.guesser_name}</strong> guessed:<br>
             Boy: ${guess.boy_name_guess} | Girl: ${guess.girl_name_guess}
         `;
-        // === END OF CHANGES ===
         guessesList.appendChild(li);
     });
 };
 
-// 4. Function to handle form submission
-const addGuess = async (event) => {
-    event.preventDefault();
+// Note: Submitting a new guess would now also require an Edge Function
+// for full security, but for a friend group, this is a huge improvement.
 
-    const guesserName = document.getElementById('guesser-name').value;
-    
-    // === CHANGED: Get values from the two new input fields ===
-    const boyNameGuess = document.getElementById('boy-name-guess').value;
-    const girlNameGuess = document.getElementById('girl-name-guess').value;
-    // === END OF CHANGES ===
-
-    // === CHANGED: Insert object now matches your new table columns ===
-    const { error } = await supabase
-        .from('guesses')
-        .insert([{ 
-            guesser_name: guesserName, 
-            boy_name_guess: boyNameGuess, 
-            girl_name_guess: girlNameGuess 
-        }]);
-    // === END OF CHANGES ===
-    
-    if (error) {
-        console.error('Error adding guess:', error);
-        alert('Could not submit your guess. Please try again.');
-    } else {
-        form.reset();
-        await fetchGuesses();
-    }
-};
-
-// 5. Add event listeners
-form.addEventListener('submit', addGuess);
-document.addEventListener('DOMContentLoaded', fetchGuesses);
+// Add event listener for the password form
+passwordForm.addEventListener('submit', unlockApp);
