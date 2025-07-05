@@ -1,26 +1,23 @@
-// Get references to all the new elements
+// Get references to all the elements
 const passwordGate = document.getElementById('password-gate');
 const mainApp = document.getElementById('main-app');
 const passwordForm = document.getElementById('password-form');
 const passwordInput = document.getElementById('password-input');
 const errorMessage = document.getElementById('error-message');
-
-// Get references for the main app
 const guessForm = document.getElementById('guess-form');
 const guessesList = document.getElementById('guesses-list');
-const guesserNameInput = document.getElementById('guesser-name');
-const boyNameInput = document.getElementById('boy-name-guess');
-const girlNameInput = document.getElementById('girl-name-guess');
 
-// The URL for your new Edge Function
+// The URL for your DEPLOYED Edge Function
 const EDGE_FUNCTION_URL = 'https://mszjjxnwqwsuzuaohhsm.supabase.co/functions/v1/get-guesses';
-// No need for Supabase client or keys on the frontend anymore!
 
-// Function to unlock the app
+// Function to unlock the app by calling the Edge Function
 const unlockApp = async (event) => {
-    event.preventDefault();
+    event.preventDefault(); // Prevent the form from reloading the page
     const password = passwordInput.value;
     errorMessage.textContent = '';
+    const button = passwordForm.querySelector('button');
+    button.disabled = true;
+    button.textContent = 'Unlocking...';
 
     try {
         const response = await fetch(EDGE_FUNCTION_URL, {
@@ -30,7 +27,9 @@ const unlockApp = async (event) => {
         });
 
         if (!response.ok) {
-            throw new Error(await response.text());
+            // Get error message from the Edge Function's response
+            const errorText = await response.text();
+            throw new Error(errorText || 'Invalid password');
         }
 
         const { guesses } = await response.json();
@@ -45,13 +44,15 @@ const unlockApp = async (event) => {
     } catch (error) {
         errorMessage.textContent = 'Incorrect password. Please try again.';
         console.error('Login failed:', error.message);
+        button.disabled = false;
+        button.textContent = 'Unlock';
     }
 };
 
-// Function to display the list of guesses
+// Function to render the list of guesses
 const displayGuesses = (guesses) => {
     guessesList.innerHTML = '';
-    if (guesses.length === 0) {
+    if (!guesses || guesses.length === 0) {
         guessesList.innerHTML = '<li>No guesses yet. Be the first!</li>';
         return;
     }
@@ -65,8 +66,8 @@ const displayGuesses = (guesses) => {
     });
 };
 
-// Note: Submitting a new guess would now also require an Edge Function
-// for full security, but for a friend group, this is a huge improvement.
-
 // Add event listener for the password form
 passwordForm.addEventListener('submit', unlockApp);
+
+// NOTE: We still need to create a function to handle submitting a NEW guess.
+// That would require another Edge Function.

@@ -24,19 +24,15 @@
         <p>Guess the baby's name! Submit a guess for both a boy and a girl.</p>
         <form id="guess-form">
             <input type="text" id="guesser-name" placeholder="Your Name" required>
-            
-            <!-- === CHANGED: Replaced the single name input with two === -->
             <input type="text" id="boy-name-guess" placeholder="Boy Name Guess" required>
             <input type="text" id="girl-name-guess" placeholder="Girl Name Guess" required>
-            <!-- === END OF CHANGES === -->
-
             <button type="submit">Submit Guesses</button>
         </form>
         <h2>Current Guesses:</h2>
         <ul id="guesses-list"></ul>
     </div>
     
+    <!-- NO Supabase JS library import here. -->
     <script src="script.js"></script>
-
 </body>
 </html>
