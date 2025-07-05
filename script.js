@@ -1,18 +1,21 @@
-// Get references to all the elements
+// === CHANGED: Updated element references ===
 const passwordGate = document.getElementById('password-gate');
 const mainApp = document.getElementById('main-app');
 const passwordForm = document.getElementById('password-form');
 const passwordInput = document.getElementById('password-input');
 const errorMessage = document.getElementById('error-message');
 const guessForm = document.getElementById('guess-form');
-const guessesList = document.getElementById('guesses-list');
+const boyGuessesList = document.getElementById('boy-guesses-list');   // New reference
+const girlGuessesList = document.getElementById('girl-guesses-list'); // New reference
+// === END OF CHANGES ===
 
-// URLs for our two Edge Functions
+// URLs for our two Edge Functions (no changes here)
 const GET_GUESSES_URL = 'https://mszjjxnwqwsuzuaohhsm.supabase.co/functions/v1/get-guesses';
 const ADD_GUESS_URL = 'https://mszjjxnwqwsuzuaohhsm.supabase.co/functions/v1/add-guess';
 
-// --- Function to unlock the app by calling the first Edge Function ---
+// --- Function to unlock the app (no changes here) ---
 const unlockApp = async (event) => {
+    // ... (this function remains exactly the same)
     event.preventDefault();
     const password = passwordInput.value;
     errorMessage.textContent = '';
@@ -26,19 +29,14 @@ const unlockApp = async (event) => {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ password: password })
         });
-
         if (!response.ok) {
             const errorText = await response.text();
             throw new Error(errorText || 'Invalid password');
         }
-
         const { guesses } = await response.json();
-        
         passwordGate.style.display = 'none';
         mainApp.style.display = 'block';
-
         displayGuesses(guesses);
-
     } catch (error) {
         errorMessage.textContent = 'Incorrect password. Please try again.';
         console.error('Login failed:', error.message);
@@ -47,55 +45,57 @@ const unlockApp = async (event) => {
     }
 };
 
-// --- Function to display the list of guesses ---
+// === CHANGED: displayGuesses function is completely rewritten ===
 const displayGuesses = (guesses) => {
-    guessesList.innerHTML = '';
+    // Clear both lists before populating
+    boyGuessesList.innerHTML = '';
+    girlGuessesList.innerHTML = '';
+
     if (!guesses || guesses.length === 0) {
-        guessesList.innerHTML = '<li>No guesses yet. Be the first!</li>';
+        boyGuessesList.innerHTML = '<li>(No guesses yet)</li>';
+        girlGuessesList.innerHTML = '<li>(No guesses yet)</li>';
         return;
     }
+
+    // Loop through each guess object and add to the respective lists
     guesses.forEach(guess => {
-        const li = document.createElement('li');
-        li.innerHTML = `
-            <strong>${guess.guesser_name}</strong> guessed:<br>
-            Boy: ${guess.boy_name_guess} | Girl: ${guess.girl_name_guess}
-        `;
-        guessesList.appendChild(li);
+        // Create list item for the boy's name
+        const boyLi = document.createElement('li');
+        boyLi.textContent = guess.boy_name_guess; // Anonymized - no guesser name
+        boyGuessesList.appendChild(boyLi);
+
+        // Create list item for the girl's name
+        const girlLi = document.createElement('li');
+        girlLi.textContent = guess.girl_name_guess; // Anonymized - no guesser name
+        girlGuessesList.appendChild(girlLi);
     });
 };
+// === END OF CHANGES ===
 
-// === NEW: Function to add a guess by calling the second Edge Function ===
+// --- Function to add a guess (no changes here) ---
 const addGuess = async (event) => {
-    event.preventDefault(); // This is the crucial line that prevents the page from reloading!
-
+    // ... (this function remains exactly the same)
+    event.preventDefault();
     const button = guessForm.querySelector('button');
     button.disabled = true;
     button.textContent = 'Submitting...';
-
     const newGuess = {
         guesser_name: document.getElementById('guesser-name').value,
         boy_name_guess: document.getElementById('boy-name-guess').value,
         girl_name_guess: document.getElementById('girl-name-guess').value
     };
-
     try {
         const response = await fetch(ADD_GUESS_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(newGuess)
         });
-
         if (!response.ok) {
             throw new Error('Server could not save the guess.');
         }
-
-        // The function returns the full updated list of guesses
         const { guesses } = await response.json();
-
-        // Refresh the list on the page and reset the form
         displayGuesses(guesses);
         guessForm.reset();
-
     } catch (error) {
         alert('Sorry, there was an error submitting your guess.');
         console.error('Failed to add guess:', error);
@@ -104,9 +104,7 @@ const addGuess = async (event) => {
         button.textContent = 'Submit Guesses';
     }
 };
-// === END OF NEW FUNCTION ===
 
-
-// --- Event Listeners ---
+// --- Event Listeners (no changes here) ---
 passwordForm.addEventListener('submit', unlockApp);
-guessForm.addEventListener('submit', addGuess); // === NEW: Add event listener for the guess form ===
+guessForm.addEventListener('submit', addGuess);

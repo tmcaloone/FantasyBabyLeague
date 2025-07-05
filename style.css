@@ -1,5 +1,60 @@
-body { font-family: sans-serif; max-width: 600px; margin: 2rem auto; }
-form { display: flex; flex-direction: column; gap: 10px; margin-bottom: 2rem; }
-input, button { padding: 10px; font-size: 1rem; }
-ul { list-style-type: none; padding: 0; }
-li { background-color: #f4f4f4; padding: 10px; margin-bottom: 5px; border-radius: 4px; }
+body { 
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    max-width: 800px; 
+    margin: 2rem auto; 
+    padding: 0 1rem;
+}
+form { 
+    display: flex; 
+    flex-direction: column; 
+    gap: 10px; 
+    margin-bottom: 2rem; 
+}
+input, button { 
+    padding: 12px; 
+    font-size: 1rem; 
+    border-radius: 6px;
+    border: 1px solid #ccc;
+}
+button {
+    background-color: #333;
+    color: white;
+    cursor: pointer;
+    border: none;
+}
+button:disabled {
+    background-color: #888;
+    cursor: not-allowed;
+}
+ul { 
+    list-style-type: none; 
+    padding: 0; 
+}
+li { 
+    background-color: #f4f4f4; 
+    padding: 10px; 
+    margin-bottom: 8px; 
+    border-radius: 4px; 
+    text-align: center;
+}
+hr {
+    border: none;
+    border-top: 1px solid #eee;
+    margin: 2rem 0;
+}
+h1, h2, h3 {
+    text-align: center;
+}
+
+/* === NEW: Styles for the side-by-side guess lists === */
+#guesses-container {
+    display: flex;
+    flex-wrap: wrap; /* Allows columns to stack on small screens */
+    gap: 2rem;       /* Space between the columns */
+}
+
+.guess-column {
+    flex-grow: 1;    /* Each column will try to take up equal space */
+    min-width: 250px;/* Ensures columns don't get too squished before wrapping */
+}
+/* === END OF NEW STYLES === */
