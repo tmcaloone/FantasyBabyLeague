@@ -13,3 +13,6 @@ supabase.deb
 # OS-specific files
 .DS_Store
 Thumbs.db
+
+# LLM prompt file
+prompt.md
