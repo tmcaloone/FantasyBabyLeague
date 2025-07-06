@@ -36,6 +36,9 @@ li {
     margin-bottom: 8px; 
     border-radius: 4px; 
     text-align: center;
+    display: flex; /* New */
+    justify-content: space-between; /* New */
+    align-items: center; /* New */
 }
 hr {
     border: none;
@@ -46,7 +49,6 @@ h1, h2, h3 {
     text-align: center;
 }
 
-/* === NEW: Styles for the side-by-side guess lists === */
 #guesses-container {
     display: flex;
     flex-wrap: wrap; /* Allows columns to stack on small screens */
@@ -57,4 +59,9 @@ h1, h2, h3 {
     flex-grow: 1;    /* Each column will try to take up equal space */
     min-width: 250px;/* Ensures columns don't get too squished before wrapping */
 }
-/* === END OF NEW STYLES === */
+
+.vote-btn {
+    padding: 5px 10px;
+    font-size: 0.9rem;
+    min-width: 60px; /* give it a minimum width */
+}
