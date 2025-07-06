@@ -38,36 +38,72 @@ const displayGuesses = (guesses) => {
         return;
     }
 
-    guesses.forEach((guess) => {
-        // --- BOY GUESS ---
-        const boyVoted = guess.user_voted_for_boy;
-        const boyLi = document.createElement('li');
-        boyLi.innerHTML = `
-            <span>${guess.boy_name_guess}</span>
+    // --- SORTING LOGIC ---
+
+    // 1. Create separate, sortable arrays for boys and girls
+    const boyData = guesses.map(g => ({
+        id: g.id,
+        name: g.boy_name_guess,
+        votes: g.boy_votes_count || 0,
+        voted: g.user_voted_for_boy,
+    }));
+
+    const girlData = guesses.map(g => ({
+        id: g.id,
+        name: g.girl_name_guess,
+        votes: g.girl_votes_count || 0,
+        voted: g.user_voted_for_girl,
+    }));
+
+    // 2. Define the sorting function
+    //  - Primary sort: votes, descending (b - a)
+    //  - Secondary (tie-breaker): name, alphabetical ascending (localeCompare)
+    const sortFunction = (a, b) => {
+        // If votes are different, sort by votes descending
+        if (a.votes !== b.votes) {
+            return b.votes - a.votes;
+        }
+        // If votes are the same, sort by name alphabetically
+        return a.name.localeCompare(b.name);
+    };
+
+    // 3. Sort both arrays using the function
+    boyData.sort(sortFunction);
+    girlData.sort(sortFunction);
+
+
+    // --- RENDERING LOGIC ---
+
+    // 4. Render the sorted boy names list
+    boyData.forEach((guess) => {
+        const li = document.createElement('li');
+        li.innerHTML = `
+            <span>${guess.name}</span>
             <button 
-                class="vote-btn ${boyVoted ? 'voted' : ''}" 
+                class="vote-btn ${guess.voted ? 'voted' : ''}" 
                 data-guess-id="${guess.id}" 
                 data-type="boy" 
-                data-voted="${boyVoted}">
-                👍 (${guess.boy_votes_count || 0})
+                data-voted="${guess.voted}">
+                👍 (${guess.votes})
             </button>
         `;
-        boyGuessesList.appendChild(boyLi);
+        boyGuessesList.appendChild(li);
+    });
 
-        // --- GIRL GUESS ---
-        const girlVoted = guess.user_voted_for_girl;
-        const girlLi = document.createElement('li');
-        girlLi.innerHTML = `
-            <span>${guess.girl_name_guess}</span>
+    // 5. Render the sorted girl names list
+    girlData.forEach((guess) => {
+        const li = document.createElement('li');
+        li.innerHTML = `
+            <span>${guess.name}</span>
             <button 
-                class="vote-btn ${girlVoted ? 'voted' : ''}" 
+                class="vote-btn ${guess.voted ? 'voted' : ''}" 
                 data-guess-id="${guess.id}" 
                 data-type="girl" 
-                data-voted="${girlVoted}">
-                👍 (${guess.girl_votes_count || 0})
+                data-voted="${guess.voted}">
+                👍 (${guess.votes})
             </button>
         `;
-        girlGuessesList.appendChild(girlLi);
+        girlGuessesList.appendChild(li);
     });
 };
 
