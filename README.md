@@ -1,6 +1,6 @@
 # Fantasy Baby League
 
-A simple, private web app for friends and family to guess a baby's name. The app is password-protected and displays all guesses anonymously in separate columns for boy and girl names.
+A simple, private web app for friends and family to guess a baby's name and vote on their favorites. The app is password-protected and displays all guesses anonymously in separate columns for boy and girl names.
 
 This project is built as a static site hosted on GitHub Pages, with a backend powered entirely by Supabase.
 
@@ -10,7 +10,8 @@ This project is built as a static site hosted on GitHub Pages, with a backend po
 *   **Hosting**: GitHub Pages
 *   **Backend**: Supabase
     *   **Database**: Supabase Postgres for storing guesses and configuration.
-    *   **API**: Two Supabase Edge Functions act as a secure API layer.
+    *   **Authentication**: Supabase Anonymous Auth to provide persistent identities for voting without user signups.
+    *   **API**: Three Supabase Edge Functions (`get-guesses`, `add-guess`, `add-vote`) act as a secure API layer.
     *   **Security**: A shared password, hashed with Bcrypt, is used to grant access.
 
 ## Features
@@ -20,6 +21,7 @@ This project is built as a static site hosted on GitHub Pages, with a backend po
 *   Real-time display of all submitted guesses.
 *   Guesses are displayed anonymously to build suspense.
 *   Responsive two-column layout for boy and girl names.
+*   Anonymous voting system to 'like' favorite names, with vote counts displayed next to each name.
 
 ---
 
@@ -50,11 +52,10 @@ To get this project running with your own backend, you will need to set up a new
     ```bash
     supabase link --project-ref YOUR_PROJECT_ID
     ```
-    *   When prompted for the database password, you can skip it by pressing Enter.
 
 4.  **Set Up Secrets**
-    *   The Edge Functions need secure access to your project's URL and a secret key.
-    *   Go to your Supabase project's **Settings > API** page to find your **Project URL** and your `service_role` secret key.
+    *   The Edge Functions need secure access to your project's URL and secret keys.
+    *   Go to your Supabase project's **Settings > API** page to find your **Project URL**, your `service_role` key, and your `anon` `public` key.
     *   Run the following commands in your terminal, pasting your own values:
     ```bash
     # Set the public URL
@@ -62,39 +63,45 @@ To get this project running with your own backend, you will need to set up a new
 
     # Set the secret service role key (NEVER commit this key to Git)
     supabase secrets set SUPABASE_SERVICE_ROLE_KEY=YOUR_SERVICE_ROLE_KEY
+
+    # Set the public anonymous key
+    supabase secrets set SUPABASE_ANON_KEY=YOUR_PROJECT_ANON_KEY
     ```
 
-5.  **Push the Database Schema**
-    *   This command will read the migration files in the `supabase/migrations` directory and apply them to your live database, creating the `guesses` and `config` tables.
+5.  **Enable Anonymous Authentication**
+    * In your Supabase project dashboard, go to **Authentication** -> **Providers**.
+    * Find the **Anonymous** provider, expand it, and click the toggle to enable it.
+
+6.  **Push the Database Schema**
+    *   This command will read the migration files in the `supabase/migrations` directory and apply them to your live database. This creates the `guesses`, `config`, and `votes` tables, as well as a helper function for querying votes.
     ```bash
     supabase db push
     ```
 
-6.  **Deploy the Edge Functions**
-    *   This command bundles and deploys the two Edge Functions (`get-guesses` and `add-guess`) to your Supabase project. Make sure Docker is running before executing.
+7.  **Deploy the Edge Functions**
+    *   This command bundles and deploys the three Edge Functions (`get-guesses`, `add-guess`, and `add-vote`) to your Supabase project. Make sure Docker is running.
     ```bash
     supabase functions deploy
     ```
 
-7.  **Manually Add the Access Password**
+8.  **Manually Add the Access Password**
     *   The app requires a hashed password to be in the database.
     *   Go to an online [Bcrypt Generator](https://bcrypt-generator.com/).
     *   Enter the shared password you want to use (e.g., "BabySmith2024") and generate the hash.
     *   In your Supabase project, go to the **Table Editor**.
-    *   Select the `config` table.
-    *   Click **"Insert row"**.
+    *   Select the `config` table and click **"Insert row"**.
     *   Leave the `id` blank and paste your generated hash into the `password_hash` column.
     *   Click **Save**.
 
 ### Frontend Setup
 
-1.  **Update Function URLs**
+1.  **Update Supabase Client Keys**
     *   Open the `script.js` file.
-    *   On lines 13 and 14, replace the placeholder `mszjjxnwqwsuzuaohhsm` with your own Supabase project's reference ID.
+    *   At the top of the file, replace the placeholder values for `SUPABASE_URL` and `SUPABASE_ANON_KEY` with your own. You can get these from your Supabase project's **Settings > API** page.
 
 2.  **Deploy to GitHub Pages**
     *   Push your code to a GitHub repository.
     *   In the repository settings, go to the "Pages" section.
-    *   Deploy from the `main` branch. Your site will be live in a few minutes.
+    *   Deploy from your main branch. Your site will be live in a few minutes.
 
 Your Fantasy Baby League is now live!
