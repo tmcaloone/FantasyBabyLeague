@@ -106,7 +106,7 @@ h1, h2, h3 {
 #baby-image {
     display: block; /* Make it a block element to allow margin auto centering */
     max-width: 250px; /* Set a maximum size so it doesn't look huge on desktop */
-    width: 100%; /* Make it responsive, scale down on small screens */
+    width: 150%; /* Make it responsive, scale down on small screens */
     height: auto; /* Maintain the aspect ratio */
     margin: 2rem auto 0; /* 2rem top margin, auto left/right for centering, 0 bottom */
 }
