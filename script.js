@@ -19,6 +19,7 @@ const guessForm = document.getElementById('guess-form');
 const boyGuessesList = document.getElementById('boy-guesses-list');
 const girlGuessesList = document.getElementById('girl-guesses-list');
 const guessesContainer = document.getElementById('guesses-container');
+const wordcloudCanvas = document.getElementById('wordcloud-canvas'); // <-- NEW
 
 // --- Edge Function URLs ---
 const GET_GUESSES_URL = 'https://mszjjxnwqwsuzuaohhsm.supabase.co/functions/v1/get-guesses';
