@@ -1,4 +1,3 @@
-// === CHANGED: Updated element references ===
 const passwordGate = document.getElementById('password-gate');
 const mainApp = document.getElementById('main-app');
 const passwordForm = document.getElementById('password-form');
@@ -7,7 +6,6 @@ const errorMessage = document.getElementById('error-message');
 const guessForm = document.getElementById('guess-form');
 const boyGuessesList = document.getElementById('boy-guesses-list');   // New reference
 const girlGuessesList = document.getElementById('girl-guesses-list'); // New reference
-// === END OF CHANGES ===
 
 // URLs for our two Edge Functions (no changes here)
 const GET_GUESSES_URL = 'https://mszjjxnwqwsuzuaohhsm.supabase.co/functions/v1/get-guesses';
@@ -45,32 +43,82 @@ const unlockApp = async (event) => {
     }
 };
 
-// === CHANGED: displayGuesses function is completely rewritten ===
+// === CHANGED: displayGuesses is updated for the new data structure ===
 const displayGuesses = (guesses) => {
-    // Clear both lists before populating
     boyGuessesList.innerHTML = '';
     girlGuessesList.innerHTML = '';
 
     if (!guesses || guesses.length === 0) {
-        boyGuessesList.innerHTML = '<li>(No guesses yet)</li>';
-        girlGuessesList.innerHTML = '<li>(No guesses yet)</li>';
+        // ... (no change here)
         return;
     }
 
-    // Loop through each guess object and add to the respective lists
     guesses.forEach(guess => {
-        // Create list item for the boy's name
+        // `guess` object now looks like:
+        // { id: 1, boy_name_guess: 'John', girl_name_guess: 'Jane', 
+        //   boy_votes_count: 5, girl_votes_count: 2,
+        //   user_voted_for_boy: true, user_voted_for_girl: false }
+
+        // Create Boy Guess Item
         const boyLi = document.createElement('li');
-        boyLi.textContent = guess.boy_name_guess; // Anonymized - no guesser name
+        boyLi.innerHTML = `
+            <span>${guess.boy_name_guess}</span>
+            <button class="vote-btn" data-guess-id="${guess.id}" data-type="boy" ${guess.user_voted_for_boy ? 'disabled' : ''}>
+                👍 (${guess.boy_votes_count || 0})
+            </button>
+        `;
         boyGuessesList.appendChild(boyLi);
 
-        // Create list item for the girl's name
+        // Create Girl Guess Item
         const girlLi = document.createElement('li');
-        girlLi.textContent = guess.girl_name_guess; // Anonymized - no guesser name
+        girlLi.innerHTML = `
+            <span>${guess.girl_name_guess}</span>
+            <button class="vote-btn" data-guess-id="${guess.id}" data-type="girl" ${guess.user_voted_for_girl ? 'disabled' : ''}>
+                👍 (${guess.girl_votes_count || 0})
+            </button>
+        `;
         girlGuessesList.appendChild(girlLi);
     });
 };
-// === END OF CHANGES ===
+
+// === CHANGED: handleVote sends the vote type ===
+const handleVote = async (event) => {
+    if (!event.target.matches('.vote-btn')) return;
+
+    const button = event.target;
+    const guessId = button.dataset.guessId;
+    const voteType = button.dataset.type; // 'boy' or 'girl'
+
+    button.disabled = true;
+    button.textContent = '...';
+
+    try {
+        const session = await supabase.auth.getSession();
+        const token = session.data.session.access_token;
+        
+        const response = await fetch(ADD_VOTE_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ 
+                guess_id: parseInt(guessId), 
+                vote_type: voteType // Send the type of vote
+            })
+        });
+        
+        if (!response.ok) throw new Error('Failed to save vote.');
+
+        const { guesses } = await response.json();
+        displayGuesses(guesses); // Re-render the list with fresh data
+
+    } catch (error) {
+        console.error('Vote failed:', error);
+        alert('There was an error casting your vote.');
+        // Don't re-enable the button to avoid confusion or double-clicks
+    }
+};
 
 // --- Function to add a guess (no changes here) ---
 const addGuess = async (event) => {
@@ -108,3 +156,5 @@ const addGuess = async (event) => {
 // --- Event Listeners (no changes here) ---
 passwordForm.addEventListener('submit', unlockApp);
 guessForm.addEventListener('submit', addGuess);
+
+document.getElementById('guesses-container').addEventListener('click', handleVote);
