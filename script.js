@@ -185,19 +185,34 @@ const addGuess = async (event) => {
             body: JSON.stringify(newGuess)
         });
 
-        if (!response.ok) throw new Error('Server could not save the guess.');
+        if (!response.ok) {
+            // ================== NEW: CATCH DUPLICATE ERROR ==================
+            // Check if the server responded with our specific "Conflict" status
+            if (response.status === 409) {
+                const errorData = await response.json();
+                alert(errorData.message); // Show the specific error from the server
+                // We return here to stop execution, but the `finally` block will still run.
+                return; 
+            }
+            // For all other errors, throw to be caught by the catch block
+            throw new Error('Server could not save the guess.');
+            // ================================================================
+        }
         
         const data = await response.json();
         displayGuesses(data.guesses);
         guessForm.reset();
     } catch (error) {
         console.error('Failed to add guess:', error);
+        // This will now only catch generic/unexpected errors
         alert('Sorry, there was an error submitting your guess.');
     } finally {
+        // This block always runs, re-enabling the button for another attempt.
         button.disabled = false;
         button.textContent = 'Submit Guesses';
     }
 };
+
 
 // MODIFIED TO HANDLE BOTH ADDING AND REMOVING VOTES
 const handleVote = async (event) => {
