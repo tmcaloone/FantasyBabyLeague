@@ -90,3 +90,15 @@ h1, h2, h3 {
 .vote-btn.voted:hover {
     background-color: #0056b3; /* Darker blue on hover */
 }
+
+#wordcloud-container {
+    width: 100%;
+    max-width: 600px; /* Or whatever max size you prefer */
+    margin: 1rem auto 3rem auto; /* Add space above and below */
+    min-height: 250px; /* Prevents layout shift while cloud is drawing */
+}
+
+#wordcloud-canvas {
+    width: 100% !important;   /* Make it responsive */
+    height: 100% !important;  /* Make it responsive */
+}

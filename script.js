@@ -35,76 +35,88 @@ const displayGuesses = (guesses) => {
     if (!guesses || guesses.length === 0) {
         boyGuessesList.innerHTML = '<li>(No guesses yet)</li>';
         girlGuessesList.innerHTML = '<li>(No guesses yet)</li>';
+        // Clear the canvas if there are no guesses
+        const ctx = wordcloudCanvas.getContext('2d');
+        ctx.clearRect(0, 0, wordcloudCanvas.width, wordcloudCanvas.height);
         return;
     }
 
-    // --- SORTING LOGIC ---
+    // ====================== WORD CLOUD LOGIC ======================
+    const generateWordCloud = (allGuesses) => {
+        const wordVotes = {};
 
-    // 1. Create separate, sortable arrays for boys and girls
+        // 1. Aggregate votes for each unique name (boy or girl)
+        allGuesses.forEach(guess => {
+            const boyName = guess.boy_name_guess.trim();
+            const girlName = guess.girl_name_guess.trim();
+            
+            if (boyName) {
+                wordVotes[boyName] = (wordVotes[boyName] || 0) + (guess.boy_votes_count || 0);
+            }
+            if (girlName) {
+                wordVotes[girlName] = (wordVotes[girlName] || 0) + (guess.girl_votes_count || 0);
+            }
+        });
+
+        // 2. Format data for the WordCloud2.js library: [['word', weight], ...]
+        // We add 1 to the vote count to ensure names with 0 votes are still visible.
+        const wordCloudData = Object.entries(wordVotes).map(([name, votes]) => [name, votes + 1]);
+
+        if (wordCloudData.length === 0) return;
+
+        // 3. Configure and draw the word cloud
+        WordCloud(wordcloudCanvas, {
+            list: wordCloudData,
+            gridSize: Math.round(16 * wordcloudCanvas.width / 1024),
+            weightFactor: 6, // Increase this number to make words bigger overall
+            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
+            color: 'random-dark',
+            backgroundColor: '#fff', // Match your page background
+            rotateRatio: 0.5, // 50% of words will be rotated
+            minSize: 10 // Minimum font size
+        });
+    };
+    generateWordCloud(guesses);
+    // =============================================================
+
+
+    // ====================== SORTING LOGIC ======================
     const boyData = guesses.map(g => ({
-        id: g.id,
-        name: g.boy_name_guess,
-        votes: g.boy_votes_count || 0,
-        voted: g.user_voted_for_boy,
+        id: g.id, name: g.boy_name_guess, votes: g.boy_votes_count || 0, voted: g.user_voted_for_boy,
     }));
-
     const girlData = guesses.map(g => ({
-        id: g.id,
-        name: g.girl_name_guess,
-        votes: g.girl_votes_count || 0,
-        voted: g.user_voted_for_girl,
+        id: g.id, name: g.girl_name_guess, votes: g.girl_votes_count || 0, voted: g.user_voted_for_girl,
     }));
-
-    // 2. Define the sorting function
-    //  - Primary sort: votes, descending (b - a)
-    //  - Secondary (tie-breaker): name, alphabetical ascending (localeCompare)
     const sortFunction = (a, b) => {
-        // If votes are different, sort by votes descending
-        if (a.votes !== b.votes) {
-            return b.votes - a.votes;
-        }
-        // If votes are the same, sort by name alphabetically
+        if (a.votes !== b.votes) return b.votes - a.votes;
         return a.name.localeCompare(b.name);
     };
-
-    // 3. Sort both arrays using the function
     boyData.sort(sortFunction);
     girlData.sort(sortFunction);
+    // =============================================================
 
 
-    // --- RENDERING LOGIC ---
-
-    // 4. Render the sorted boy names list
+    // ====================== RENDERING LOGIC ======================
     boyData.forEach((guess) => {
         const li = document.createElement('li');
         li.innerHTML = `
             <span>${guess.name}</span>
-            <button 
-                class="vote-btn ${guess.voted ? 'voted' : ''}" 
-                data-guess-id="${guess.id}" 
-                data-type="boy" 
-                data-voted="${guess.voted}">
+            <button class="vote-btn ${guess.voted ? 'voted' : ''}" data-guess-id="${guess.id}" data-type="boy" data-voted="${guess.voted}">
                 👍 (${guess.votes})
-            </button>
-        `;
+            </button>`;
         boyGuessesList.appendChild(li);
     });
 
-    // 5. Render the sorted girl names list
     girlData.forEach((guess) => {
         const li = document.createElement('li');
         li.innerHTML = `
             <span>${guess.name}</span>
-            <button 
-                class="vote-btn ${guess.voted ? 'voted' : ''}" 
-                data-guess-id="${guess.id}" 
-                data-type="girl" 
-                data-voted="${guess.voted}">
+            <button class="vote-btn ${guess.voted ? 'voted' : ''}" data-guess-id="${guess.id}" data-type="girl" data-voted="${guess.voted}">
                 👍 (${guess.votes})
-            </button>
-        `;
+            </button>`;
         girlGuessesList.appendChild(li);
     });
+    // =============================================================
 };
 
 // --- API Call & Logic Functions ---

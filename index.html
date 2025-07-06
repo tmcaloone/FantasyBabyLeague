@@ -31,6 +31,12 @@
 
         <hr>
         <h2>The Guesses Are In!</h2>
+
+        <!-- =================== WORD CLOUD CONTAINER =================== -->
+        <div id="wordcloud-container">
+            <canvas id="wordcloud-canvas"></canvas>
+        </div>
+
         <div id="guesses-container">
             <div class="guess-column">
                 <h3>Boy Names</h3>
@@ -48,7 +54,13 @@
 
     </div>
 
+    <!-- =================== SUPABASE LIBRARY =================== -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <!-- =================== WORD CLOUD LIBRARY =================== -->
+    <script src="https://cdn.jsdelivr.net/npm/wordcloud@1.2.2/src/wordcloud2.js"></script>
+
+    <!-- =================== APP LOGIC =================== -->
     <script src="script.js"></script>
 </body>
 </html>
