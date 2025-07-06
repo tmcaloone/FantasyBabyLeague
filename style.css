@@ -115,7 +115,20 @@ button:disabled {
 .header-icon {
     width: 50px;
     height: 50px;
+    /* =================== NEW: Make the image a perfect circle =================== */
+    border-radius: 50%;
+    object-fit: cover; /* Ensures the image covers the area without distortion */
 }
+
+/* =================== NEW: Add this new rule for the h1 =================== */
+.app-header > h1 {
+    /* This removes the extra space above/below the text inside the h1,
+       allowing flexbox's align-items:center to work perfectly. */
+    margin-bottom: 0;
+    line-height: 1; 
+}
+/* ========================================================================= */
+
 
 #baby-image {
     display: block;
