@@ -69,28 +69,51 @@ const unlockApp = async (event) => {
     errorMessage.textContent = '';
 
     try {
-        const { error: authError } = await supabaseClient.auth.signInAnonymously();
-        if (authError) throw new Error(`Anonymous sign-in failed: ${authError.message}`);
+        // --- THE FIX IS HERE ---
 
-        const { data: { session } } = await supabaseClient.auth.getSession();
-        if (!session) throw new Error('Could not get user session.');
+        // 1. Check if a session already exists in the browser's storage
+        let { data: { session } } = await supabaseClient.auth.getSession();
 
+        // 2. If no session exists, it's a new visitor. Create one.
+        if (!session) {
+            const { data: signInData, error: authError } = await supabaseClient.auth.signInAnonymously();
+            if (authError) {
+                // This might fail if anonymous auth is disabled in your Supabase project settings
+                throw new Error(`Anonymous sign-in failed: ${authError.message}`);
+            }
+            session = signInData.session; // Use the newly created session
+        }
+
+        // 3. At this point, we are guaranteed to have a session object (either old or new)
+        if (!session) {
+            throw new Error('Could not get or create a user session.');
+        }
+
+        // 4. Now, use the session's token to securely call the function
         const response = await fetch(GET_GUESSES_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
             body: JSON.stringify({ password: passwordInput.value })
         });
 
-        if (!response.ok) throw new Error(await response.text() || 'Invalid password');
+        if (!response.ok) {
+            // If the password was wrong, sign the user out to clear the bad session attempt.
+            // This is good practice in case the failed login somehow created a session.
+            if (response.status === 401) {
+                 await supabaseClient.auth.signOut();
+            }
+            throw new Error(await response.text() || 'Invalid password');
+        }
 
         const data = await response.json();
         passwordGate.style.display = 'none';
         mainApp.style.display = 'block';
         displayGuesses(data.guesses);
+
     } catch (error) {
         console.error('Login failed:', error.message);
         errorMessage.textContent = 'Incorrect password or a server error occurred.';
-        await supabaseClient.auth.signOut();
+        // Don't sign out here, as they might be a returning user with a valid session who just typed the wrong password.
     } finally {
         button.disabled = false;
         button.textContent = 'Unlock';
