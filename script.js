@@ -19,19 +19,25 @@ const guessForm = document.getElementById('guess-form');
 const boyGuessesList = document.getElementById('boy-guesses-list');
 const girlGuessesList = document.getElementById('girl-guesses-list');
 const guessesContainer = document.getElementById('guesses-container');
-const wordcloudCanvas = document.getElementById('wordcloud-canvas'); // <-- NEW
+const wordcloudCanvas = document.getElementById('wordcloud-canvas');
+const totalGuessesCount = document.getElementById('total-guesses-count'); // <-- NEW
 
 // --- Edge Function URLs ---
 const GET_GUESSES_URL = 'https://mszjjxnwqwsuzuaohhsm.supabase.co/functions/v1/get-guesses';
 const ADD_GUESS_URL = 'https://mszjjxnwqwsuzuaohhsm.supabase.co/functions/v1/add-guess';
 const ADD_VOTE_URL = 'https://mszjjxnwqwsuzuaohhsm.supabase.co/functions/v1/add-vote';
-const REMOVE_VOTE_URL = 'https://mszjjxnwqwsuzuaohhsm.supabase.co/functions/v1/remove-vote'; // <-- NEW
+const REMOVE_VOTE_URL = 'https://mszjjxnwqwsuzuaohhsm.supabase.co/functions/v1/remove-vote';
 
 // --- Main Display Function ---
 const displayGuesses = (guesses) => {
     // Clear both lists before populating
     boyGuessesList.innerHTML = '';
     girlGuessesList.innerHTML = '';
+
+    // ====================== NEW: UPDATE TOTAL GUESS COUNT ======================
+    const totalCount = guesses ? guesses.length : 0;
+    totalGuessesCount.textContent = totalCount;
+    // =========================================================================
 
     if (!guesses || guesses.length === 0) {
         boyGuessesList.innerHTML = '<li>(No guesses yet)</li>';
@@ -186,17 +192,12 @@ const addGuess = async (event) => {
         });
 
         if (!response.ok) {
-            // ================== NEW: CATCH DUPLICATE ERROR ==================
-            // Check if the server responded with our specific "Conflict" status
             if (response.status === 409) {
                 const errorData = await response.json();
-                alert(errorData.message); // Show the specific error from the server
-                // We return here to stop execution, but the `finally` block will still run.
+                alert(errorData.message);
                 return; 
             }
-            // For all other errors, throw to be caught by the catch block
             throw new Error('Server could not save the guess.');
-            // ================================================================
         }
         
         const data = await response.json();
@@ -204,10 +205,8 @@ const addGuess = async (event) => {
         guessForm.reset();
     } catch (error) {
         console.error('Failed to add guess:', error);
-        // This will now only catch generic/unexpected errors
         alert('Sorry, there was an error submitting your guess.');
     } finally {
-        // This block always runs, re-enabling the button for another attempt.
         button.disabled = false;
         button.textContent = 'Submit Guesses';
     }
@@ -221,7 +220,6 @@ const handleVote = async (event) => {
     const button = event.target;
     const hasVoted = button.dataset.voted === 'true';
     
-    // Temporarily disable button to prevent double-clicks
     button.disabled = true; 
     const originalText = button.innerHTML;
     button.textContent = '...';
@@ -230,7 +228,6 @@ const handleVote = async (event) => {
         const { data: { session } } = await supabaseClient.auth.getSession();
         if (!session) throw new Error('User not logged in');
 
-        // Determine which URL to call based on whether the user has already voted
         const url = hasVoted ? REMOVE_VOTE_URL : ADD_VOTE_URL;
 
         const response = await fetch(url, {
@@ -245,17 +242,14 @@ const handleVote = async (event) => {
         if (!response.ok) throw new Error('Failed to update vote.');
 
         const data = await response.json();
-        // The displayGuesses function will re-enable the button implicitly by re-rendering it
         displayGuesses(data.guesses);
 
     } catch (error) {
         console.error('Vote failed:', error);
         alert('There was an error casting your vote.');
-        // Restore button on error
         button.innerHTML = originalText;
         button.disabled = false;
     }
-    // Note: We don't need a `finally` block because a successful call replaces the button entirely.
 };
 
 // --- Event Listeners ---
