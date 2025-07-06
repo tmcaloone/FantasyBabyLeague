@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <!-- Password Gate (no changes here) -->
+    <!-- Password Gate -->
     <div id="password-gate">
         <h1>Fantasy Baby League</h1>
         <p>Please enter the password to continue.</p>
@@ -15,6 +15,10 @@
             <input type="password" id="password-input" placeholder="Password" required>
             <button type="submit">Unlock</button>
         </form>
+        
+        <!-- ================== BABY FACE MERGE IMAGE ================== -->
+        <img id="baby-image" src="resources/Baby.jpeg" alt="Illustration of a baby in a blanket">
+        
         <p id="error-message" style="color:red;"></p>
     </div>
 
@@ -56,7 +60,7 @@
 
     <!-- =================== SUPABASE LIBRARY =================== -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    
+
     <!-- =================== WORD CLOUD LIBRARY =================== -->
     <script src="https://cdn.jsdelivr.net/npm/wordcloud@1.2.2/src/wordcloud2.js"></script>
 
