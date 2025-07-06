@@ -13,7 +13,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // 1. Get user from token to know who is submitting
+    // 1. Authenticate the user
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_ANON_KEY')!,
@@ -24,19 +24,19 @@ Deno.serve(async (req) => {
       return new Response('Authentication error', { status: 401, headers: corsHeaders });
     }
 
-    // 2. Get the new guess data from the request body
+    // 2. Get guess data
     const { guesser_name, boy_name_guess, girl_name_guess } = await req.json();
     if (!guesser_name || !boy_name_guess || !girl_name_guess) {
       return new Response('Missing required guess fields', { status: 400, headers: corsHeaders });
     }
 
-    // 3. Create an ADMIN client to perform the insert
+    // 3. Create admin client for insert
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     );
 
-    // 4. Insert the new guess into the 'guesses' table
+    // 4. Insert the new guess
     const { error: insertError } = await supabaseAdmin
       .from('guesses')
       .insert({ guesser_name, boy_name_guess, girl_name_guess });
@@ -46,19 +46,18 @@ Deno.serve(async (req) => {
       return new Response('Could not save guess', { status: 500, headers: corsHeaders });
     }
 
-    // 5. CORRECTED: After insert, call the RPC function to get the complete, formatted list
+    // 5. Call the RPC function to get the fresh, formatted list
     const { data: guesses, error: rpcError } = await supabaseAdmin
       .rpc('get_all_guesses_with_votes', { current_user_id: user.id });
 
     if (rpcError) {
       console.error('Error calling RPC function after insert:', rpcError);
-      // Even if this fails, the insert worked. Return an empty array so the frontend doesn't break.
       return new Response(JSON.stringify({ guesses: [] }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
     
-    // 6. Return the complete, updated list of guesses in the correct format
+    // 6. THE FIX: Return the updated list with the correct CORS headers
     return new Response(JSON.stringify({ guesses }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
