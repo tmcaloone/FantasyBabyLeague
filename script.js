@@ -24,6 +24,7 @@ const guessesContainer = document.getElementById('guesses-container');
 const GET_GUESSES_URL = 'https://mszjjxnwqwsuzuaohhsm.supabase.co/functions/v1/get-guesses';
 const ADD_GUESS_URL = 'https://mszjjxnwqwsuzuaohhsm.supabase.co/functions/v1/add-guess';
 const ADD_VOTE_URL = 'https://mszjjxnwqwsuzuaohhsm.supabase.co/functions/v1/add-vote';
+const REMOVE_VOTE_URL = 'https://mszjjxnwqwsuzuaohhsm.supabase.co/functions/v1/remove-vote'; // <-- NEW
 
 // --- Main Display Function ---
 const displayGuesses = (guesses) => {
@@ -38,21 +39,31 @@ const displayGuesses = (guesses) => {
     }
 
     guesses.forEach((guess) => {
-        // Create list item for the boy's name
+        // --- BOY GUESS ---
+        const boyVoted = guess.user_voted_for_boy;
         const boyLi = document.createElement('li');
         boyLi.innerHTML = `
             <span>${guess.boy_name_guess}</span>
-            <button class="vote-btn" data-guess-id="${guess.id}" data-type="boy" ${guess.user_voted_for_boy ? 'disabled' : ''}>
+            <button 
+                class="vote-btn ${boyVoted ? 'voted' : ''}" 
+                data-guess-id="${guess.id}" 
+                data-type="boy" 
+                data-voted="${boyVoted}">
                 👍 (${guess.boy_votes_count || 0})
             </button>
         `;
         boyGuessesList.appendChild(boyLi);
 
-        // Create list item for the girl's name
+        // --- GIRL GUESS ---
+        const girlVoted = guess.user_voted_for_girl;
         const girlLi = document.createElement('li');
         girlLi.innerHTML = `
             <span>${guess.girl_name_guess}</span>
-            <button class="vote-btn" data-guess-id="${guess.id}" data-type="girl" ${guess.user_voted_for_girl ? 'disabled' : ''}>
+            <button 
+                class="vote-btn ${girlVoted ? 'voted' : ''}" 
+                data-guess-id="${guess.id}" 
+                data-type="girl" 
+                data-voted="${girlVoted}">
                 👍 (${guess.girl_votes_count || 0})
             </button>
         `;
@@ -69,27 +80,16 @@ const unlockApp = async (event) => {
     errorMessage.textContent = '';
 
     try {
-        // --- THE FIX IS HERE ---
-
-        // 1. Check if a session already exists in the browser's storage
         let { data: { session } } = await supabaseClient.auth.getSession();
 
-        // 2. If no session exists, it's a new visitor. Create one.
         if (!session) {
             const { data: signInData, error: authError } = await supabaseClient.auth.signInAnonymously();
-            if (authError) {
-                // This might fail if anonymous auth is disabled in your Supabase project settings
-                throw new Error(`Anonymous sign-in failed: ${authError.message}`);
-            }
-            session = signInData.session; // Use the newly created session
+            if (authError) throw new Error(`Anonymous sign-in failed: ${authError.message}`);
+            session = signInData.session;
         }
 
-        // 3. At this point, we are guaranteed to have a session object (either old or new)
-        if (!session) {
-            throw new Error('Could not get or create a user session.');
-        }
+        if (!session) throw new Error('Could not get or create a user session.');
 
-        // 4. Now, use the session's token to securely call the function
         const response = await fetch(GET_GUESSES_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
@@ -97,11 +97,7 @@ const unlockApp = async (event) => {
         });
 
         if (!response.ok) {
-            // If the password was wrong, sign the user out to clear the bad session attempt.
-            // This is good practice in case the failed login somehow created a session.
-            if (response.status === 401) {
-                 await supabaseClient.auth.signOut();
-            }
+            if (response.status === 401) await supabaseClient.auth.signOut();
             throw new Error(await response.text() || 'Invalid password');
         }
 
@@ -109,11 +105,9 @@ const unlockApp = async (event) => {
         passwordGate.style.display = 'none';
         mainApp.style.display = 'block';
         displayGuesses(data.guesses);
-
     } catch (error) {
         console.error('Login failed:', error.message);
         errorMessage.textContent = 'Incorrect password or a server error occurred.';
-        // Don't sign out here, as they might be a returning user with a valid session who just typed the wrong password.
     } finally {
         button.disabled = false;
         button.textContent = 'Unlock';
@@ -156,18 +150,26 @@ const addGuess = async (event) => {
     }
 };
 
+// MODIFIED TO HANDLE BOTH ADDING AND REMOVING VOTES
 const handleVote = async (event) => {
     if (!event.target.matches('.vote-btn')) return;
 
     const button = event.target;
-    button.disabled = true;
+    const hasVoted = button.dataset.voted === 'true';
+    
+    // Temporarily disable button to prevent double-clicks
+    button.disabled = true; 
+    const originalText = button.innerHTML;
     button.textContent = '...';
 
     try {
         const { data: { session } } = await supabaseClient.auth.getSession();
         if (!session) throw new Error('User not logged in');
 
-        const response = await fetch(ADD_VOTE_URL, {
+        // Determine which URL to call based on whether the user has already voted
+        const url = hasVoted ? REMOVE_VOTE_URL : ADD_VOTE_URL;
+
+        const response = await fetch(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
             body: JSON.stringify({
@@ -176,14 +178,20 @@ const handleVote = async (event) => {
             })
         });
 
-        if (!response.ok) throw new Error('Failed to save vote.');
+        if (!response.ok) throw new Error('Failed to update vote.');
 
         const data = await response.json();
+        // The displayGuesses function will re-enable the button implicitly by re-rendering it
         displayGuesses(data.guesses);
+
     } catch (error) {
         console.error('Vote failed:', error);
         alert('There was an error casting your vote.');
+        // Restore button on error
+        button.innerHTML = originalText;
+        button.disabled = false;
     }
+    // Note: We don't need a `finally` block because a successful call replaces the button entirely.
 };
 
 // --- Event Listeners ---
