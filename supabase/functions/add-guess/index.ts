@@ -35,7 +35,7 @@ Deno.serve(async (req) => {
     // 3. Create admin client for database operations
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+      Deno.env.get('SERVICE_ROLE_KEY')!
     );
 
     // ================== NEW: DUPLICATE CHECK ==================

@@ -35,7 +35,7 @@ Deno.serve(async (req) => {
     // 3. Create a Supabase ADMIN client to access protected data
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+      Deno.env.get('SERVICE_ROLE_KEY')!
     );
 
     // 4. Fetch the stored password hash from the 'config' table
