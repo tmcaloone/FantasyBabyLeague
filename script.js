@@ -6,7 +6,7 @@
 const SUPABASE_URL = 'https://dqirnrusxoqqfrsaeatg.supabase.co';
 // IMPORTANT: Paste your ANON KEY here. You can find it in your Supabase Dashboard:
 // Settings -> API -> Project API keys -> anon public
-const SUPABASE_ANON_KEY = 'sb_publishable_qVQIHID86XnZf8fdIYZyjA_ZiUUm_TZ';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRxaXJucnVzeG9xcWZyc2FlYXRnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc5NjI5MjAsImV4cCI6MjA4MzUzODkyMH0.0VrcEHVqQiCmKJH56G6Vbptu6rq07Q2_uNZnKCBN7OE';
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // --- Element References ---
