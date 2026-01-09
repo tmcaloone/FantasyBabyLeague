@@ -16,12 +16,24 @@ Deno.serve(async (req) => {
 
   try {
     // 1. Authenticate user via JWT from the client
+    console.log('Starting auth check...');
+    console.log('Auth header:', req.headers.get('Authorization')?.substring(0, 50) + '...');
+
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_ANON_KEY')!,
       { global: { headers: { Authorization: req.headers.get('Authorization')! } } }
     );
-    const { data: { user } } = await supabaseClient.auth.getUser();
+
+    const { data, error: authError } = await supabaseClient.auth.getUser();
+    console.log('Auth result - user:', data?.user?.id, 'error:', authError);
+
+    if (authError) {
+      console.error('Auth error details:', JSON.stringify(authError));
+      return new Response(JSON.stringify(authError), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
+    const user = data?.user;
     if (!user) {
       return new Response('Authentication error', { status: 401, headers: corsHeaders });
     }
