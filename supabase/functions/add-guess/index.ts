@@ -26,11 +26,13 @@ Deno.serve(async (req) => {
 
     // 2. Get guess data and trim whitespace
     let { guesser_name, boy_name_guess, girl_name_guess } = await req.json();
-    if (!guesser_name || !boy_name_guess || !girl_name_guess) {
+    // Require guesser_name plus at least one of boy/girl. Either name field may be empty
+    // (the frontend hides the input depending on BABY_SEX).
+    if (!guesser_name || (!boy_name_guess && !girl_name_guess)) {
       return new Response(JSON.stringify({ message: 'Missing required guess fields' }), { status: 400, headers: corsHeaders });
     }
-    boy_name_guess = boy_name_guess.trim();
-    girl_name_guess = girl_name_guess.trim();
+    boy_name_guess = (boy_name_guess || '').trim();
+    girl_name_guess = (girl_name_guess || '').trim();
 
     // 3. Create admin client for database operations
     const supabaseAdmin = createClient(
@@ -39,11 +41,23 @@ Deno.serve(async (req) => {
     );
 
     // ================== NEW: DUPLICATE CHECK ==================
-    // 4. Check if either name already exists in its respective category (case-insensitive)
-    const { data: existing, error: checkError } = await supabaseAdmin
-      .from('guesses')
-      .select('boy_name_guess, girl_name_guess')
-      .or(`boy_name_guess.ilike.${boy_name_guess},girl_name_guess.ilike.${girl_name_guess}`);
+    // 4. Check if either name already exists in its respective category (case-insensitive).
+    // Build the duplicate-check filter dynamically — if a name is empty, skip its half
+    // (otherwise `ilike.` with empty pattern would match every row).
+    const orParts: string[] = [];
+    if (boy_name_guess) orParts.push(`boy_name_guess.ilike.${boy_name_guess}`);
+    if (girl_name_guess) orParts.push(`girl_name_guess.ilike.${girl_name_guess}`);
+
+    let existing: { boy_name_guess: string | null; girl_name_guess: string | null }[] | null = null;
+    let checkError: unknown = null;
+    if (orParts.length > 0) {
+      const result = await supabaseAdmin
+        .from('guesses')
+        .select('boy_name_guess, girl_name_guess')
+        .or(orParts.join(','));
+      existing = result.data;
+      checkError = result.error;
+    }
 
     if (checkError) {
       console.error('Error checking for duplicates:', checkError);
@@ -51,8 +65,8 @@ Deno.serve(async (req) => {
     }
 
     if (existing && existing.length > 0) {
-      const isBoyDuplicate = existing.some(g => g.boy_name_guess.toLowerCase() === boy_name_guess.toLowerCase());
-      const isGirlDuplicate = existing.some(g => g.girl_name_guess.toLowerCase() === girl_name_guess.toLowerCase());
+      const isBoyDuplicate = !!boy_name_guess && existing.some(g => (g.boy_name_guess || '').toLowerCase() === boy_name_guess.toLowerCase());
+      const isGirlDuplicate = !!girl_name_guess && existing.some(g => (g.girl_name_guess || '').toLowerCase() === girl_name_guess.toLowerCase());
       
       let errorMessage = '';
       if (isBoyDuplicate && isGirlDuplicate) {
