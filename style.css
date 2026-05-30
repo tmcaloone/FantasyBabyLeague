@@ -122,15 +122,73 @@ button:disabled {
     line-height: 1; 
 }
 
-#baby-image {
-    display: block;
-    max-width: 350px; 
-    width: 100%; 
-    height: auto;
+/* --- Family tree on password gate --- */
+.family-tree {
     margin: 2rem auto 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.family-tree-parents {
+    display: flex;
+    justify-content: center;
+    gap: 3rem;
+}
+
+.family-tree-photo {
+    width: 140px;
+    height: 140px;
     border-radius: 12px;
-    box-shadow: var(--shadow);
+    object-fit: cover;
     border: 5px solid white;
+    box-shadow: var(--shadow);
+    background-color: #eee;
+}
+
+.family-tree-connector {
+    position: relative;
+    width: 100%;
+    height: 60px;
+}
+
+.family-tree-horiz {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: calc(140px + 3rem); /* spans gap between parent photo centers */
+    height: 3px;
+    background-color: var(--primary-accent);
+}
+
+.family-tree-vert {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 3px;
+    height: 60px;
+    background-color: var(--primary-accent);
+}
+
+.family-tree-child {
+    display: flex;
+    justify-content: center;
+}
+
+/* Shrink for narrow viewports */
+@media (max-width: 480px) {
+    .family-tree-photo {
+        width: 100px;
+        height: 100px;
+    }
+    .family-tree-parents {
+        gap: 1.5rem;
+    }
+    .family-tree-horiz {
+        width: calc(100px + 1.5rem);
+    }
 }
 
 #guesses-container {
