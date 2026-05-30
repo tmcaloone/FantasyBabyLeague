@@ -20,3 +20,6 @@ prompt.md
 # Brainstorming / design artifacts — local only
 .superpowers/
 docs/superpowers/
+
+# Local DB cleanup script with a baked-in password hash
+cleanup.sql
