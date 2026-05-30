@@ -9,6 +9,10 @@ const SUPABASE_URL = 'https://dqirnrusxoqqfrsaeatg.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRxaXJucnVzeG9xcWZyc2FlYXRnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc5NjI5MjAsImV4cCI6MjA4MzUzODkyMH0.0VrcEHVqQiCmKJH56G6Vbptu6rq07Q2_uNZnKCBN7OE';
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+// --- Config: which sex(es) the couple is having ---
+// Drives which guess inputs / columns are visible. Set to 'girl', 'boy', or 'both'.
+const BABY_SEX = 'girl';
+
 // --- Element References ---
 const passwordGate = document.getElementById('password-gate');
 const mainApp = document.getElementById('main-app');
@@ -40,8 +44,8 @@ const displayGuesses = (guesses) => {
     // =========================================================================
 
     if (!guesses || guesses.length === 0) {
-        boyGuessesList.innerHTML = '<li>(No guesses yet)</li>';
-        girlGuessesList.innerHTML = '<li>(No guesses yet)</li>';
+        if (BABY_SEX !== 'girl') boyGuessesList.innerHTML = '<li>(No guesses yet)</li>';
+        if (BABY_SEX !== 'boy') girlGuessesList.innerHTML = '<li>(No guesses yet)</li>';
         // Clear the canvas if there are no guesses
         const ctx = wordcloudCanvas.getContext('2d');
         ctx.clearRect(0, 0, wordcloudCanvas.width, wordcloudCanvas.height);
@@ -104,25 +108,31 @@ const displayGuesses = (guesses) => {
 
 
     // ====================== RENDERING LOGIC ======================
-    boyData.forEach((guess) => {
-        const li = document.createElement('li');
-        li.innerHTML = `
-            <span>${guess.name}</span>
-            <button class="vote-btn ${guess.voted ? 'voted' : ''}" data-guess-id="${guess.id}" data-type="boy" data-voted="${guess.voted}">
-                👍 (${guess.votes})
-            </button>`;
-        boyGuessesList.appendChild(li);
-    });
+    if (BABY_SEX !== 'girl') {
+        boyData.forEach((guess) => {
+            if (!guess.name) return; // skip rows with empty boy name
+            const li = document.createElement('li');
+            li.innerHTML = `
+                <span>${guess.name}</span>
+                <button class="vote-btn ${guess.voted ? 'voted' : ''}" data-guess-id="${guess.id}" data-type="boy" data-voted="${guess.voted}">
+                    👍 (${guess.votes})
+                </button>`;
+            boyGuessesList.appendChild(li);
+        });
+    }
 
-    girlData.forEach((guess) => {
-        const li = document.createElement('li');
-        li.innerHTML = `
-            <span>${guess.name}</span>
-            <button class="vote-btn ${guess.voted ? 'voted' : ''}" data-guess-id="${guess.id}" data-type="girl" data-voted="${guess.voted}">
-                👍 (${guess.votes})
-            </button>`;
-        girlGuessesList.appendChild(li);
-    });
+    if (BABY_SEX !== 'boy') {
+        girlData.forEach((guess) => {
+            if (!guess.name) return; // skip rows with empty girl name
+            const li = document.createElement('li');
+            li.innerHTML = `
+                <span>${guess.name}</span>
+                <button class="vote-btn ${guess.voted ? 'voted' : ''}" data-guess-id="${guess.id}" data-type="girl" data-voted="${guess.voted}">
+                    👍 (${guess.votes})
+                </button>`;
+            girlGuessesList.appendChild(li);
+        });
+    }
     // =============================================================
 };
 
@@ -179,10 +189,12 @@ const addGuess = async (event) => {
         const { data: { session } } = await supabaseClient.auth.getSession();
         if (!session) throw new Error('User not logged in');
         
+        const boyInputEl = document.getElementById('boy-name-guess');
+        const girlInputEl = document.getElementById('girl-name-guess');
         const newGuess = {
             guesser_name: document.getElementById('guesser-name').value,
-            boy_name_guess: document.getElementById('boy-name-guess').value,
-            girl_name_guess: document.getElementById('girl-name-guess').value
+            boy_name_guess: (BABY_SEX === 'girl') ? '' : boyInputEl.value,
+            girl_name_guess: (BABY_SEX === 'boy') ? '' : girlInputEl.value
         };
         
         const response = await fetch(ADD_GUESS_URL, {
@@ -256,3 +268,23 @@ const handleVote = async (event) => {
 passwordForm.addEventListener('submit', unlockApp);
 guessForm.addEventListener('submit', addGuess);
 guessesContainer.addEventListener('click', handleVote);
+
+// --- Apply BABY_SEX visibility ---
+const applyBabySexVisibility = () => {
+    const boyInput = document.getElementById('boy-name-guess');
+    const girlInput = document.getElementById('girl-name-guess');
+    const boyColumn = document.getElementById('boy-guesses-column');
+    const girlColumn = document.getElementById('girl-guesses-column');
+
+    if (BABY_SEX === 'girl') {
+        boyInput.style.display = 'none';
+        boyInput.removeAttribute('required');
+        boyColumn.style.display = 'none';
+    } else if (BABY_SEX === 'boy') {
+        girlInput.style.display = 'none';
+        girlInput.removeAttribute('required');
+        girlColumn.style.display = 'none';
+    }
+    // 'both' → leave everything as the HTML defaults
+};
+applyBabySexVisibility();
