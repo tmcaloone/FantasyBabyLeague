@@ -23,7 +23,19 @@
                 <button type="submit">Unlock</button>
             </form>
             
-            <img id="baby-image" src="resources/Baby.jpeg" alt="Illustration of a baby in a blanket">
+            <div class="family-tree">
+                <div class="family-tree-parents">
+                    <img src="resources/Ali.png" alt="Ali" class="family-tree-photo">
+                    <img src="resources/Becky.png" alt="Becky" class="family-tree-photo">
+                </div>
+                <div class="family-tree-connector">
+                    <div class="family-tree-horiz"></div>
+                    <div class="family-tree-vert"></div>
+                </div>
+                <div class="family-tree-child">
+                    <img src="resources/QuestionMark.jpg" alt="Baby (unknown)" class="family-tree-photo">
+                </div>
+            </div>
             
             <p id="error-message" style="color:red;"></p>
         </div>
@@ -32,10 +44,9 @@
     <!-- Main App -->
     <div id="main-app" style="display:none;">
         <header class="app-header">
-            <img src="resources/Chloe.png" alt="Baby icon" class="header-icon">
+            <img src="resources/Ali.png" alt="Ali" class="header-icon">
             <h1>Fantasy Baby League</h1>
-            <!-- =================== NEW: ADDED SECOND IMAGE =================== -->
-            <img src="resources/B.png" alt="Baby icon" class="header-icon">
+            <img src="resources/Becky.png" alt="Becky" class="header-icon">
         </header>
         
         <div class="card">
