@@ -16,3 +16,7 @@ Thumbs.db
 
 # LLM prompt file
 prompt.md
+
+# Brainstorming / design artifacts — local only
+.superpowers/
+docs/superpowers/
